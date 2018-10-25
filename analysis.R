@@ -867,9 +867,17 @@ gam.function <- function(x)  {
 
 ## the formula
 form <- as.formula("count ~ s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4)")
-
 ## To the entire dataset, returns the model 
 mod.DM <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
+
+
+## 2.  meteorology only model the formula for lag>1
+form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4)")
+## To the entire dataset, returns the model 
+mod.DMgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
+
 
 
 # 2. Only past dengue incidences model - all variables all lags
@@ -897,50 +905,44 @@ mod.DDOptimal <- gam(form.Optimal, family=quasipoisson, na.action=na.exclude, da
 
 
 
-# 3. meteorology and past dengue incidences model - all variables all lags
+# 3. meteorology and past dengue incidences model - all variables lag > 1
 
 ## the formula
-form <- as.formula("count ~ s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count8,k=4) + s(count18,k=4) + s(count23,k=4)")
+form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) +s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count8,k=4) + s(count18,k=4) + s(count23,k=4)")
 
 ## To the entire dataset, returns the model 
-mod.DMD <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+mod.DMDgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
-form <- as.formula("count ~ s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4)")
 
-## To the entire dataset, returns the model 
-mod.DMD <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
 
 
 # 4. meteorology, past dengue incidences and surrounding dengue incidences model - all variables all lags
 
 ## the formula
-form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4)")
+form <- as.formula("count ~   s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4)")
 
 
 ## To the entire dataset, returns the model 
-mod.DMDS_Short <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+mod.DMDS_Shortgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
 
-form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
+form <- as.formula("count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
 
-mod.DMDS_Optimal <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+mod.DMDS_Optimalgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
 # including lags >=1
-
-form <- as.formula("count ~   s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) +  s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) + s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
-
-mod.DMDS_OptimalGt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
 
 
 # 5. Garbage offset along with meteorology, past dengue incidences and surrounding dengue incidences model - all variables all lags
 
 ## the formula
-form <- as.formula("count ~ s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4) + offset(log(garbage)) + s(garbage)")
+form <- as.formula("count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4)  + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4) + offset(log(garbage)) + s(garbage)")
 
 ## To the entire dataset, returns the model 
 mod.DMDSO <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
 
 
 d <- matrix(trainTill2012_df$count, nrow = 60, byrow = FALSE)
@@ -963,25 +965,31 @@ par(mfrow=c(2,4))
 plot.gam(mod.DM, ylab="log(RR)")
 dev.off()
 
+
+png("D-M-1-gt1.png",width=1600, height=1300, res=300)
+par(mfrow=c(2,4))
+plot.gam(mod.DMgt1, ylab="log(RR)")
+dev.off()
+
+
+
 # ```
 
 # ```{r DMPred, echo=FALSE, fig.cap="Monthly Observed and predicted dengue cases (2008-2012). "}
 
 par(mfrow=c(1,1))
-p <- fitted.values(mod.DM)
+p <- fitted.values(mod.DMgt1)
 
-a<- predict(mod.DM, type="response")
+a<- predict(mod.DMgt1, type="response")
 a <- matrix(a, nrow = 60, byrow = FALSE)
 a <- as.data.frame(a)
 aSum <- rowSums(a ,na.rm = TRUE)
 is.na(aSum) <- !aSum
 
-#png("Pred-MetOptimal.png",width=1600, height=1300, res=300)
-
+png("Pred-MetOptimal.png",width=1600, height=1300, res=300)
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend(x = 20, y = 1400, c("Observed", "Predicted"), text.font = 40,  lty=1, col=c('black', 'red'), bty='n', cex=.75)
-
 title(main="Optimal Met Model")
 
 dev.off()
@@ -1055,7 +1063,7 @@ dev.expl_DDShort <-  summary(model)$dev.expl
 
 summary_DDShort <- data.frame("Short-term Lag Surveillance Model", RMSE_DDShort, SRMSE_DDShort, r.sq_DDShort, dev.expl_DDShort)
 names(summary_DDShort) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
-
+summary_DDShort
 
 
 # # ```{r DDShortTable, echo=FALSE, comment=NA}
@@ -1534,6 +1542,52 @@ totalPerformance <- rbind(summary_DM, summary_DDShort, summary_DDOptimal, summar
 # caption = 'Predictive Performance Statistics of All Models'
 # )
 # ```
+
+
+
+### Making AIC 
+
+dfun <- function(object) {
+  with(object,sum((weights * residuals^2)[weights > 0])/df.residual)
+}
+
+### For poisson
+# meteorology only model the formula for lag>1 
+
+mod.DMgt1.po <- gam(count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) , family= poisson, na.action=na.exclude, data = trainTill2012_df)
+
+## Short-term incidences
+mod.DDShort.po <- gam(count ~ s(count1,k=4) + s(count2,k=4) + s(count3,k=4) + s(count4,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
+## Optimal lags (short and long included)
+mod.DDOptimal.po <- gam(count ~ s(count1,k=4) + s(count2,k=4) + s(count23,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
+## meteorology and past dengue incidences model - all variables lag > 1
+mod.DMDgt1.po <- gam(count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) +s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count8,k=4) + s(count18,k=4) + s(count23,k=4) , family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
+### meteorology, past dengue incidences and surrounding dengue incidences model - all variables all lags
+
+mod.DMDS_Optimalgt1.po <- gam(count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
+###  Garbage offset along with meteorology, past dengue incidences and surrounding dengue incidences model - all variables all lags
+
+mod.DMDSO.po <- gam( count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4)  + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4) + offset(log(garbage)) + s(garbage) , family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
+
+### calculate AIC
+
+library(bbmle)
+
+(qAIC(mod.DMgt1.po,dispersion=dfun(mod.DMgt1.po)))
+(qAIC(mod.DDShort.po,dispersion=dfun(mod.DMgt1.po)))
+(qAIC(mod.DDOptimal.po,dispersion=dfun(mod.DMgt1.po)))
+(qAIC(mod.DMDgt1.po,dispersion=dfun(mod.DMgt1.po)))
+(qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.DMgt1.po)))
+(qAIC(mod.DMDSO.po,dispersion=dfun(mod.DMgt1.po)))
+
+result <- ICtab(mod.DMDSO.po, mod.DMDS_Optimalgt1.po, mod.DMDgt1.po, 
+                mod.DDOptimal.po, mod.DDShort.po, mod.DMgt1.po, dispersion=dfun(mod.DMgt1.po),type="qAIC")
+class(result)
 
 
 ## Evaluation 
