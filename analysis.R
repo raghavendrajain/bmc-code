@@ -922,9 +922,16 @@ form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s
 mod.DMDS_Short <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
 
 
-form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) + +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
+form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
 
 mod.DMDS_Optimal <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
+# including lags >=1
+
+form <- as.formula("count ~   s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) +  s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) + s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
+
+mod.DMDS_OptimalGt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
 
 
 # 5. Garbage offset along with meteorology, past dengue incidences and surrounding dengue incidences model - all variables all lags
@@ -1412,6 +1419,40 @@ dev.expl_DMDS_Optimal <-  summary(model)$dev.expl
 
 summary_DMDS_Optimal <- data.frame("Optimal Representation Model", RMSE_DMDS_Optimal, SRMSE_DMDS_Optimal, r.sq_DMDS_Optimal, dev.expl_DMDS_Optimal)
 names(summary_DMDS_Optimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
+
+
+
+### with lag>1
+
+model <- mod.DMDS_OptimalGt1 ## name of the model 
+
+par(mfrow=c(1,1))
+p <- fitted.values(model)
+a <- predict(model, type="response")
+a <- matrix(a, nrow = 60, byrow = FALSE)
+a <- as.data.frame(a)
+aSum <- rowSums(a ,na.rm = TRUE)
+is.na(aSum) <- !aSum
+
+
+# png("Pred-OptimalRepresentation.png",width=1600, height=1300, res=300)
+
+plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
+points(aSum,type="l", col="red")
+legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
+
+title(main="Optimal Representation Model")
+
+# dev.off()
+
+RMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+SRMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+r.sq_DMDS_Optimal <-   summary(model)$r.sq
+dev.expl_DMDS_Optimal <-  summary(model)$dev.expl
+
+summary_DMDS_Optimal <- data.frame("Optimal Representation Model", RMSE_DMDS_Optimal, SRMSE_DMDS_Optimal, r.sq_DMDS_Optimal, dev.expl_DMDS_Optimal)
+names(summary_DMDS_Optimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
+
 
 
 
