@@ -869,13 +869,15 @@ gam.function <- function(x)  {
 form <- as.formula("count ~ s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4)")
 ## To the entire dataset, returns the model 
 mod.DM <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
-
+summary(mod.DM)
+plot.gam(mod.DM)
 
 
 ## 2.  meteorology only model the formula for lag>1
-form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4)")
+form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) +  s(rainl3,k=3)")
 ## To the entire dataset, returns the model 
 mod.DMgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+summary(mod.DMgt1)
 
 
 
@@ -908,10 +910,16 @@ mod.DDOptimal <- gam(form.Optimal, family=quasipoisson, na.action=na.exclude, da
 # 3. meteorology and past dengue incidences model - all variables lag > 1
 
 ## the formula
-form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) +s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count8,k=4) + s(count18,k=4) + s(count23,k=4)")
+form <- as.formula("count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) +s(rainl1,k=4) + s(rainl2,k=4) + s(count1,k=4) + s(count2,k=4) +  s(count23,k=4)")
 
 ## To the entire dataset, returns the model 
 mod.DMDgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
+# check the summary
+summary(mod.DMDgt1)
+
+## check for collinearity
+
 
 
 
@@ -930,6 +938,9 @@ mod.DMDS_Shortgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data =
 form <- as.formula("count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) +  s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4)")
 
 mod.DMDS_Optimalgt1 <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+summary(mod.DMDS_Optimalgt1)
+
+
 
 # including lags >=1
 
@@ -942,6 +953,8 @@ form <- as.formula("count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4)  + s
 
 ## To the entire dataset, returns the model 
 mod.DMDSO <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+
+summary(mod.DMDSO)
 
 
 
@@ -994,13 +1007,23 @@ title(main="Optimal Met Model")
 
 dev.off()
 
-RMSE_DM <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DM <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+RMSE_DM <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DM <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
 r.sq_DM <-   summary(mod.DM)$r.sq
 dev.expl_DM <-  summary(mod.DM)$dev.expl
 
 summary_DM <- data.frame("Optimal Met Model", RMSE_DM, SRMSE_DM, r.sq_DM, dev.expl_DM)
 names(summary_DM) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
+summary_DM
+
+
 
 
 
@@ -1056,8 +1079,16 @@ title(main="Short-term Lag Surveillance Model")
 dev.off()
 
 
-RMSE_DDShort <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DDShort<-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+
+RMSE_DDShort <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DDShort<-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+# RMSE_DDShort <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+# SRMSE_DDShort<-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
 r.sq_DDShort <-   summary(model)$r.sq
 dev.expl_DDShort <-  summary(model)$dev.expl
 
@@ -1159,7 +1190,7 @@ a <- as.data.frame(a)
 aSum <- rowSums(a ,na.rm = TRUE)
 is.na(aSum) <- !aSum
 
-# png("Pred-OptimalLag.png",width=1600, height=1300, res=300)
+png("Pred-OptimalLag.png",width=1600, height=1300, res=300)
 
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
@@ -1167,10 +1198,20 @@ legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', 
 
 title(main="Optimal Lag Surveillance Model")
 
-# dev.off()
+dev.off()
 
-RMSE_DDOptimal  <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DDOptimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+
+RMSE_DDOptimal  <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DDOptimal <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
+# RMSE_DDOptimal  <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+# SRMSE_DDOptimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
 r.sq_DDOptimal <-   summary(model)$r.sq
 dev.expl_DDOptimal <-  summary(model)$dev.expl
 
@@ -1195,14 +1236,14 @@ names(summary_DDOptimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Devi
 # png("Fit-Met-OptimalLag.png",width=1280, height=760, res=300)
 
 par(mfrow=c(3,4))
-plot.gam(mod.DMD, ylab="log(RR)")
+plot.gam(mod.DMDgt1, ylab="log(RR)")
 
 # dev.off()
 
 
 # ```{r DMDPred, echo=FALSE, fig.cap="Monthly Observed and predicted dengue cases (2008-2012). "}
 
-model <- mod.DMD ## name of the model 
+model <- mod.DMDgt1 ## name of the model 
 
 par(mfrow=c(1,1))
 p <- fitted.values(model)
@@ -1212,23 +1253,33 @@ a <- as.data.frame(a)
 aSum <- rowSums(a ,na.rm = TRUE)
 is.na(aSum) <- !aSum
 
-# png("Pred-Met-OptimalLag.png",width=1600, height=1300, res=300)
+png("Pred-Met-OptimalLag.png",width=1600, height=1300, res=300)
 
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
 title(main="Optimal Met and Lag Surveillance Model")
 
-# dev.off()
+dev.off()
 
-RMSE_DMD  <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DMD <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+
+RMSE_DMD  <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DMD <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
+# RMSE_DMD  <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+# SRMSE_DMD <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
 r.sq_DMD <-   summary(model)$r.sq
 dev.expl_DMD <-  summary(model)$dev.expl
 
 summary_DMD <- data.frame("Optimal Met and Lag Surveillance Model", RMSE_DMD, SRMSE_DMD, r.sq_DMD, dev.expl_DMD)
 names(summary_DMD) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
-
+summary_DMD 
 
 
 # 
@@ -1347,50 +1398,29 @@ names(summary_DMDS_Short) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Dev
 
 #png("Fit-OptimalRepresentation.png",width=1200, height=800, res=300)
 #png("Fit-OptimalRepresentation.png", res=300)
-par(mar=c(5,1,2,2))
-par(mfrow=c(4,4))
+#par(mar=c(5,1,2,2))
+#par(mfrow=c(4,4))
 #plot.gam(mod.DMDS_Optimal, ylab="log(RR)", cex.lab=1.5)
 
-
-plot.gam(mod.DMDS_Optimal, select = 1, xlab = "temp0",  ylab="log(RR)", cex.lab=2.0)
-
-plot.gam(mod.DMDS_Optimal, select = 2, xlab = "temp1",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 3, xlab = "temp2",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 4, xlab = "temp3",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 5, xlab = "rain0",  ylab="log(RR)", cex.lab=2.0)
+par(mar=c(5,1,2,2))
+par(mfrow=c(2,3))
+#png("Fit-OptimalRepresentation.png",width=1200, height=800, res=300)
+#par(mfrow=c(2,3))
+# 
+# plot.gam(mod.DMDS_Optimalgt1, select = 1, xlab = "temp1",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 2, xlab = "temp2",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 3, xlab = "temp3",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 4, xlab = "rain1",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 5, xlab = "rain2",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 6, xlab = "rain3",  ylab="log(RR)", cex.lab=2.0)
 
 
-plot.gam(mod.DMDS_Optimal, select = 6, xlab = "rain1",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 7, xlab = "rain2",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 8, xlab = "rain3",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 9, xlab = "count1",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 10, xlab = "count2",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 11, xlab = "count23",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 12, xlab = "surrounding1",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 13, xlab = "surrounding2",  ylab="log(RR)", cex.lab=2.0)
-
-
-plot.gam(mod.DMDS_Optimal, select = 14, xlab = "surrounding12",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 7, xlab = "count1",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 8, xlab = "count2",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 9, xlab = "count23",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 10, xlab = "surrounding1",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 11, xlab = "surrounding2",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDS_Optimalgt1, select = 12, xlab = "surrounding12",  ylab="log(RR)", cex.lab=2.0)
 
 #dev.off()
 
@@ -1399,7 +1429,7 @@ plot.gam(mod.DMDS_Optimal, select = 14, xlab = "surrounding12",  ylab="log(RR)",
 
 # ```{r DMDSOptimalPred, echo=FALSE, fig.cap="Monthly Observed and predicted dengue cases (2008-2012). "}
 
-model <- mod.DMDS_Optimal ## name of the model 
+model <- mod.DMDS_Optimalgt1 ## name of the model 
 
 par(mfrow=c(1,1))
 p <- fitted.values(model)
@@ -1410,7 +1440,7 @@ aSum <- rowSums(a ,na.rm = TRUE)
 is.na(aSum) <- !aSum
 
 
-# png("Pred-OptimalRepresentation.png",width=1600, height=1300, res=300)
+png("Pred-OptimalRepresentation.png",width=1600, height=1300, res=300)
 
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
@@ -1418,50 +1448,26 @@ legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', 
 
 title(main="Optimal Representation Model")
 
-# dev.off()
+dev.off()
 
-RMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+
+RMSE_DMDS_Optimal  <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
+# RMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+# SRMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
 r.sq_DMDS_Optimal <-   summary(model)$r.sq
 dev.expl_DMDS_Optimal <-  summary(model)$dev.expl
 
 summary_DMDS_Optimal <- data.frame("Optimal Representation Model", RMSE_DMDS_Optimal, SRMSE_DMDS_Optimal, r.sq_DMDS_Optimal, dev.expl_DMDS_Optimal)
 names(summary_DMDS_Optimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
-
-
-
-### with lag>1
-
-model <- mod.DMDS_OptimalGt1 ## name of the model 
-
-par(mfrow=c(1,1))
-p <- fitted.values(model)
-a <- predict(model, type="response")
-a <- matrix(a, nrow = 60, byrow = FALSE)
-a <- as.data.frame(a)
-aSum <- rowSums(a ,na.rm = TRUE)
-is.na(aSum) <- !aSum
-
-
-# png("Pred-OptimalRepresentation.png",width=1600, height=1300, res=300)
-
-plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
-points(aSum,type="l", col="red")
-legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
-
-title(main="Optimal Representation Model")
-
-# dev.off()
-
-RMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DMDS_Optimal <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
-r.sq_DMDS_Optimal <-   summary(model)$r.sq
-dev.expl_DMDS_Optimal <-  summary(model)$dev.expl
-
-summary_DMDS_Optimal <- data.frame("Optimal Representation Model", RMSE_DMDS_Optimal, SRMSE_DMDS_Optimal, r.sq_DMDS_Optimal, dev.expl_DMDS_Optimal)
-names(summary_DMDS_Optimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
-
-
+summary_DMDS_Optimal 
 
 
 # ```{r DMDSOptiTable, echo=FALSE, comment=NA}
@@ -1479,9 +1485,33 @@ names(summary_DMDS_Optimal) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "D
 # ```{r DMDSO, fig.cap= '**Association between the meteorological variables, past dengue count over optimal lags within 1-30 months, surrounding district count over 0-30 months, garbage data and the dengue outbreak.**. Solid lines represent relative risks (RR) of dengue cases and dottted lines depict the upper and lower limits of 95% confidence intervals.', fig.width = 10, fig.height=10, fig.align='center', echo=FALSE}
 
 #png("Fit-SocialIncluded.png",width=1280, height=810, res=300)
-par(mfrow=c(4,4))
-plot.gam(mod.DMDSO, ylab="log(RR)")
+# par(mfrow=c(4,4))
+# plot.gam(mod.DMDSO, ylab="log(RR)")
 #dev.off()
+
+#png("Fit-OptimalRepresentation+Garbage.png",width=1200, height=800, res=300)
+#par(mfrow=c(2,3))
+# 
+# plot.gam(mod.DMDS_Optimalgt1, select = 1, xlab = "temp1",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 2, xlab = "temp2",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 3, xlab = "temp3",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 4, xlab = "rain1",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 5, xlab = "rain2",  ylab="log(RR)", cex.lab=2.0)
+# plot.gam(mod.DMDS_Optimalgt1, select = 6, xlab = "rain3",  ylab="log(RR)", cex.lab=2.0)
+
+par(mar=c(5,1,2,2))
+par(mfrow=c(2,4))
+plot.gam(mod.DMDSO, select = 7, xlab = "count1",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 8, xlab = "count2",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 9, xlab = "count23",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 10, xlab = "surrounding1",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 11, xlab = "surrounding2",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 12, xlab = "surrounding12",  ylab="log(RR)", cex.lab=2.0)
+plot.gam(mod.DMDSO, select = 13, xlab = "garbage",  ylab="log(RR)", cex.lab=2.0)
+
+#dev.off()
+
+
 
 # ```
 # 
@@ -1499,7 +1529,7 @@ is.na(aSum) <- !aSum
 
 
 
-# png("Pred-SocialIncluded.png",width=1600, height=1300, res=300)
+png("Pred-SocialIncluded.png",width=1600, height=1300, res=300)
 
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
@@ -1507,18 +1537,37 @@ legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', 
 
 title(main="Social-economic data Included")
 
-# dev.off()
+dev.off()
 
-RMSE_DMDSO<-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
-SRMSE_DMDSO <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
 
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+
+RMSE_DMDSO  <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_DMDSO <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
+
+# 
+# RMSE_DMDSO<-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))
+# SRMSE_DMDSO <-  sqrt(mean((trainTill2012_df$count-p)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
+# # This code was written for testing
+# d<-matrix(p, 60, 50)
+# d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+# temp<- cbind(trainTill2012_df$count,p, d)
+# #View(d)
 
 r.sq_DMDSO <-   summary(model)$r.sq
 dev.expl_DMDSO <-  summary(model)$dev.expl
 
 summary_DMDSO<- data.frame("Social-economic data Included", RMSE_DMDSO, SRMSE_DMDSO, r.sq_DMDSO, dev.expl_DMDSO)
 names(summary_DMDSO) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
-
+summary_DMDSO
 
 
 
@@ -1536,7 +1585,9 @@ names(summary_DMDSO) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance
 # 
 # ```{r TotalPerformance, echo=FALSE, comment=NA}
 
-totalPerformance <- rbind(summary_DM, summary_DDShort, summary_DDOptimal, summary_DMD, summary_DMDS_Short, summary_DMDS_Optimal, summary_DMDSO)
+totalPerformance <- rbind(summary_DM, summary_DDOptimal, summary_DMD,  summary_DMDS_Optimal, summary_DMDSO)
+totalPerformance
+
 
 # knitr::kable(totalPerformance, booktabs = TRUE,
 # caption = 'Predictive Performance Statistics of All Models'
@@ -1557,7 +1608,7 @@ dfun <- function(object) {
 mod.DMgt1.po <- gam(count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) , family= poisson, na.action=na.exclude, data = trainTill2012_df)
 
 ## Short-term incidences
-mod.DDShort.po <- gam(count ~ s(count1,k=4) + s(count2,k=4) + s(count3,k=4) + s(count4,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
+#mod.DDShort.po <- gam(count ~ s(count1,k=4) + s(count2,k=4) + s(count3,k=4) + s(count4,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
 
 ## Optimal lags (short and long included)
 mod.DDOptimal.po <- gam(count ~ s(count1,k=4) + s(count2,k=4) + s(count23,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
@@ -1578,16 +1629,17 @@ mod.DMDSO.po <- gam( count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4)  + 
 
 library(bbmle)
 
-(qAIC(mod.DMgt1.po,dispersion=dfun(mod.DMgt1.po)))
-(qAIC(mod.DDShort.po,dispersion=dfun(mod.DMgt1.po)))
-(qAIC(mod.DDOptimal.po,dispersion=dfun(mod.DMgt1.po)))
-(qAIC(mod.DMDgt1.po,dispersion=dfun(mod.DMgt1.po)))
-(qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.DMgt1.po)))
-(qAIC(mod.DMDSO.po,dispersion=dfun(mod.DMgt1.po)))
+qp_base <- (qAIC(mod.DMgt1.po,dispersion=dfun(mod.DMgt1.po)))
+delta_qp.dd   <-  (qAIC(mod.DDOptimal.po,dispersion=dfun(mod.DMgt1.po))) -qp_base
+delta_qp.dmd <-   (qAIC(mod.DMDgt1.po,dispersion=dfun(mod.DMgt1.po))) - qp_base
+delta_qp.dmds <- (qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.DMgt1.po))) -qp_base
+delta_qp.dmdso <- (qAIC(mod.DMDSO.po,dispersion=dfun(mod.DMgt1.po))) - qp_base
 
-result <- ICtab(mod.DMDSO.po, mod.DMDS_Optimalgt1.po, mod.DMDgt1.po, 
-                mod.DDOptimal.po, mod.DDShort.po, mod.DMgt1.po, dispersion=dfun(mod.DMgt1.po),type="qAIC")
-class(result)
+rbind(0, delta_qp.dd, delta_qp.dmd, delta_qp.dmds, delta_qp.dmdso)
+
+# result <- ICtab(mod.DMDSO.po, mod.DMDS_Optimalgt1.po, mod.DMDgt1.po, mod.DDOptimal.po, dispersion=dfun(mod.DMgt1.po),type="qAIC")
+# result
+# class(result)
 
 
 ## Evaluation 
@@ -1608,9 +1660,9 @@ class(result)
 
 # ```{r validation, echo=FALSE}
 
-form <- as.formula("count ~  s(templ0, k=4) + s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl0,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) + s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4) ")
+form <- as.formula("count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) + s(count1,k=4) + s(count2,k=4) + s(count23,k=4) + s(surroundingCountVec1,k=4) + s(surroundingCountVec2,k=4) +  s(surroundingCountVec12,k=4) + offset(log(garbage)) + s(garbage)")
 
-preddata <- subset(WholeDataLagged, select = c(templ0, templ1, templ2, templ3, rainl0, rainl1, rainl2, rainl3, count1, count2,  count23, surroundingCountVec1, surroundingCountVec2, surroundingCountVec12))
+preddata <- subset(WholeDataLagged, select = c(templ1, templ2, templ3, rainl1, rainl2, rainl3, count1, count2,  count23, surroundingCountVec1, surroundingCountVec2, surroundingCountVec12, garbage))
 
 
 train1 <- subset(WholeDataLagged,date_sick_year < 2013)
@@ -1630,7 +1682,7 @@ train1 <- subset(WholeDataLagged,date_sick_year < 2013)
 train2 <- subset(WholeDataLagged,date_sick_year < 2014)
 train3 <- subset(WholeDataLagged,date_sick_year < 2015)
 
-pred1 <- subset(WholeDataLagged,date_sick_year> 2012)
+pred1 <- subset(WholeDataLagged,date_sick_year> 2012) 
 pred2 <- subset(WholeDataLagged,date_sick_year> 2013)
 pred3 <- subset(WholeDataLagged,date_sick_year> 2014)
 pred4 <- subset(WholeDataLagged,date_sick_year> 2012 & date_sick_year < 2014)
@@ -1703,7 +1755,7 @@ is.na(aSum_2) <- !aSum_2
 
 
 
-# png("Validate-2008-2013.png",width=1600, height=1300, res=300)
+png("Validate-2008-2013.png",width=1600, height=1300, res=300)
 
 par(mfrow=c(1,1))
 plot(1:96, dSum, type="l", ylab="Dengue Cases",axes=T,xlab="Months")
@@ -1714,7 +1766,7 @@ legend('topleft', c("Observed", "Predicted on Training Set", "Predicted on Valid
 abline(h=790, col = "gray60")
 #title("Training Dataset (2008-2013) was used.")
 
-# dev.off()
+dev.off()
 
 
 aa <- "2008-2013"
@@ -1747,7 +1799,7 @@ is.na(aSum_3) <- !aSum_3
 
 
 
-# png("Validate-2008-2014.png",width=1600, height=1300, res=300)
+png("Validate-2008-2014.png",width=1600, height=1300, res=300)
 
 par(mfrow=c(1,1))
 plot(1:96, dSum, type="l", ylab="Dengue Cases",axes=T,xlab="Months")
@@ -1758,8 +1810,7 @@ legend('topleft', c("Observed", "Predicted on Training Set", "Predicted on Valid
 
 abline(h=790, col = "gray60")
 #title("Training Dataset (2008-2014) was used.")
-
-# dev.off()
+dev.off()
 
 aa <- "2008-2014"
 
@@ -1783,6 +1834,8 @@ all <- rbind(pred_accuracy1, pred_accuracy2, pred_accuracy3)
 # knitr::kable(all, booktabs = TRUE,
 # caption = 'Predictive Performance Statistics measured using SRMSE'
 # )
+
+all
 
 
 
@@ -1864,21 +1917,23 @@ negPredValue(valueF, dengueCountF)
 #title(main="Specificity=85.1, Sensitivity=84.7, PPV=91.6, NPV=74.5")
 
 
-## for the WHO thresold
+## for the WHO thresold, it is moving. so change it accordingly
 
 
 avg_5<-mean(dSum[1:60])
 SD_2years <- 2*sd(dSum[1:60])
 threshold <- avg_5 + SD_2years 
 
-value <- aSum_3[61:96]>threshold
+abline(h=threshold, col = "green")
+
+valueWho <- aSum_3[61:96]>threshold
 dengueCount <- dSum[61:96]>threshold
 
-xtabs(value~dengueCount)
-table(value,dengueCount )
-prop.table(table(value,dengueCount))
+xtabs(valueWho~dengueCount)
+table(valueWho,dengueCount )
+prop.table(table(valueWho,dengueCount))
 
-valueF <- as.factor(value)
+valueF <- as.factor(valueWho)
 dengueCountF <- as.factor(dengueCount)
 
 
@@ -1887,7 +1942,7 @@ sensitivity(valueF, dengueCountF)
 posPredValue(valueF, dengueCountF)
 negPredValue(valueF, dengueCountF)  
 
-#title(main="Specificity=72.72, Sensitivity=96.0, PPV=88.88, NPV=88.88")
+#title(main="Specificity=63.63, Sensitivity=96.0, PPV=85.7, NPV=87.5")
 
 
 
