@@ -5,7 +5,7 @@ require(reshape)
 require(plotly)
 require(bnlearn) # used for Bayesian Networks
 require(mgcv)    # used for Generalized Additive Modeling 
-require(fpp)
+require(fpp2)
 require(lubridate)
 require(bsts)
 require(dplyr)
@@ -15,6 +15,10 @@ library(dplyr)
 library(tidyr)
 library(htmlwidgets)
 library(DT)
+library(bbmle)
+library(reshape)
+library(caTools)
+library(caret)
 
 ## The data about connection of one district to another. I am not sure if there are no mistakes in this dataset. 
 
@@ -863,6 +867,46 @@ gam.function <- function(x)  {
 #### association models. All the models are listed below. 
 
 
+### model 0: Testing with Naive Models
+
+
+
+countdata <- trainTill2012_df$count
+length(countdata) # this data has 50 districts for 60 months i.e. 5 years
+#View(countdata)
+countData_m <- matrix(countdata, 60, 50)
+dim(countData_m)
+#View(countData_m)
+
+
+monthlyNaive <- function(x){
+  monthlyNaviveModel <- c(x[1:12], x[1:12], x[13:24], x[25:36], x[37:48]);
+  #temp <- c(monthlyNaviveModel[1:24], monthlyNaviveModel[24:60]);
+  return (monthlyNaviveModel);
+}
+
+
+
+countData_mn <- as.vector(apply(countData_m, 2 , monthlyNaive))
+
+temp<- cbind(trainTill2012_df$count, countData_mn)
+View(temp)
+# 
+# RMSE_MN  <-  sqrt(mean((trainTill2012_df$count-countData_mn )^2,na.rm=T))
+# SRMSE_MN <-  sqrt(mean((trainTill2012_df$count-countData_mn)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+# 
+
+
+form <- as.formula("count ~ s(countData_mn,k=4)")
+mod.MN <- gam(form, family=quasipoisson, na.action=na.exclude, data = trainTill2012_df)
+summary(mod.MN)
+plot.gam(mod.MN)
+
+
+
+
+
+
 # 1. meteorology only model - all variables all lags
 
 ## the formula
@@ -986,6 +1030,50 @@ dev.off()
 
 
 
+### Plot monthly naive model
+
+
+par(mfrow=c(1,1))
+p <- fitted.values(mod.MN)
+length(p)
+
+a<- predict(mod.MN, type="response")
+a <- matrix(a, nrow = 60, byrow = FALSE)
+a <- as.data.frame(a)
+aSum <- rowSums(a ,na.rm = TRUE)
+is.na(aSum) <- !aSum
+
+png("Pred-SeasonalNaive.png",width=1600, height=1300, res=300)
+plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
+points(aSum,type="l", col="red")
+legend(x = 20, y = 1400, c("Observed", "Predicted"), text.font = 40,  lty=1, col=c('black', 'red'), bty='n', cex=.75)
+title(main="(A) Seasonal naïve method")
+
+dev.off()
+
+
+d<-matrix(p, 60, 50)
+d<- as.vector(apply(d, 2 , function(x) { c(rep(NA,23), x[24:60]) }))
+temp<- cbind(trainTill2012_df$count,p, d)
+#View(temp)
+RMSE_MN <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
+SRMSE_MN <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+r.sq_MN <-   summary(mod.MN)$r.sq
+dev.expl_MN <-  summary(mod.MN)$dev.expl
+
+summary_MN <- data.frame("Seasonal naïve method", RMSE_MN, SRMSE_MN, r.sq_MN, dev.expl_MN)
+names(summary_MN) <- c("Model Name", "RMSE", "SRMSE", "R-sq.(adj)", "Deviance Explained")
+summary_MN
+
+
+
+
+
+
+
+
+
+
 # ```
 
 # ```{r DMPred, echo=FALSE, fig.cap="Monthly Observed and predicted dengue cases (2008-2012). "}
@@ -1003,7 +1091,7 @@ png("Pred-MetOptimal.png",width=1600, height=1300, res=300)
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend(x = 20, y = 1400, c("Observed", "Predicted"), text.font = 40,  lty=1, col=c('black', 'red'), bty='n', cex=.75)
-title(main="Optimal Met Model")
+title(main="(B) Optimal Met Model")
 
 dev.off()
 
@@ -1196,7 +1284,7 @@ plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
 
-title(main="Optimal Lag Surveillance Model")
+title(main="(C) Optimal Lag Surveillance Model")
 
 dev.off()
 
@@ -1258,7 +1346,7 @@ png("Pred-Met-OptimalLag.png",width=1600, height=1300, res=300)
 plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
-title(main="Optimal Met and Lag Surveillance Model")
+title(main="(D) Optimal Met and Lag Surveillance Model")
 
 dev.off()
 
@@ -1446,7 +1534,7 @@ plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
 
-title(main="Optimal Representation Model")
+title(main="(E) Optimal Representation Model")
 
 dev.off()
 
@@ -1535,7 +1623,7 @@ plot(1:60, dSum, type="l",ylab="Dengue Cases",axes=T,xlab="Months")
 points(aSum,type="l", col="red")
 legend('top', c("Observed", "Predicted"),lty=1, col=c('black', 'red'), bty='n', cex=.75)
 
-title(main="Social-economic data Included")
+title(main="(F) Social-economic data Included")
 
 dev.off()
 
@@ -1548,6 +1636,8 @@ temp<- cbind(trainTill2012_df$count,p, d)
 
 RMSE_DMDSO  <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))
 SRMSE_DMDSO <-  sqrt(mean((trainTill2012_df$count-d)^2,na.rm=T))/sqrt(mean((trainTill2012_df$count)^2,na.rm=T))
+
+
 
 
 
@@ -1585,7 +1675,7 @@ summary_DMDSO
 # 
 # ```{r TotalPerformance, echo=FALSE, comment=NA}
 
-totalPerformance <- rbind(summary_DM, summary_DDOptimal, summary_DMD,  summary_DMDS_Optimal, summary_DMDSO)
+totalPerformance <- rbind(summary_MN, summary_DM, summary_DDOptimal, summary_DMD,  summary_DMDS_Optimal, summary_DMDSO)
 totalPerformance
 
 
@@ -1602,7 +1692,15 @@ dfun <- function(object) {
   with(object,sum((weights * residuals^2)[weights > 0])/df.residual)
 }
 
+
+
+
 ### For poisson
+
+#Seasonal Naive: 
+
+mod.MN.po <- gam(count ~ s(countData_mn,k=4), family=poisson, na.action=na.exclude, data = trainTill2012_df)
+
 # meteorology only model the formula for lag>1 
 
 mod.DMgt1.po <- gam(count ~ s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4) + s(rainl1,k=4) + s(rainl2,k=4) + s(rainl3,k=4) , family= poisson, na.action=na.exclude, data = trainTill2012_df)
@@ -1628,18 +1726,27 @@ mod.DMDSO.po <- gam( count ~  s(templ1, k=4) + s(templ2,k=4) + s(templ3,k=4)  + 
 ### calculate AIC
 
 library(bbmle)
+# 
 
-qp_base <- (qAIC(mod.DMgt1.po,dispersion=dfun(mod.DMgt1.po)))
-delta_qp.dd   <-  (qAIC(mod.DDOptimal.po,dispersion=dfun(mod.DMgt1.po))) -qp_base
-delta_qp.dmd <-   (qAIC(mod.DMDgt1.po,dispersion=dfun(mod.DMgt1.po))) - qp_base
-delta_qp.dmds <- (qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.DMgt1.po))) -qp_base
-delta_qp.dmdso <- (qAIC(mod.DMDSO.po,dispersion=dfun(mod.DMgt1.po))) - qp_base
 
-rbind(0, delta_qp.dd, delta_qp.dmd, delta_qp.dmds, delta_qp.dmdso)
+qp_base <- (qAIC(mod.MN.po,dispersion=dfun(mod.MN.po)))
+delta_qp.dm <- (qAIC(mod.DMgt1.po,dispersion=dfun(mod.MN.po))) -qp_base
+delta_qp.dd   <-  (qAIC(mod.DDOptimal.po,dispersion=dfun(mod.MN.po))) -qp_base
+delta_qp.dmd <-   (qAIC(mod.DMDgt1.po,dispersion=dfun(mod.MN.po))) - qp_base
+delta_qp.dmds <- (qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.MN.po))) -qp_base
+delta_qp.dmdso <- (qAIC(mod.DMDSO.po,dispersion=dfun(mod.MN.po))) - qp_base
+
+# qp_base <- (qAIC(mod.DMgt1.po,dispersion=dfun(mod.DMgt1.po)))
+# delta_qp.dd   <-  (qAIC(mod.DDOptimal.po,dispersion=dfun(mod.DDOptimal.po))) -qp_base
+# delta_qp.dmd <-   (qAIC(mod.DMDgt1.po,dispersion=dfun(mod.DMDgt1.po))) - qp_base
+# delta_qp.dmds <- (qAIC(mod.DMDS_Optimalgt1.po,dispersion=dfun(mod.DMDS_Optimalgt1.po))) -qp_base
+# delta_qp.dmdso <- (qAIC(mod.DMDSO.po,dispersion=dfun(mod.DMDSO.po))) - qp_base
+
+
+rbind(0, delta_qp.dm, delta_qp.dd, delta_qp.dmd, delta_qp.dmds, delta_qp.dmdso)
 
 # result <- ICtab(mod.DMDSO.po, mod.DMDS_Optimalgt1.po, mod.DMDgt1.po, mod.DDOptimal.po, dispersion=dfun(mod.DMgt1.po),type="qAIC")
 # result
-# class(result)
 
 
 ## Evaluation 
@@ -1908,43 +2015,43 @@ dengueCountF <- as.factor(dengueCount)
 
 library(caret)
 
-sensitivity(valueF, dengueCountF) 
-specificity(valueF, dengueCountF)
-posPredValue(valueF, dengueCountF)
-negPredValue(valueF, dengueCountF)  
-
-
-#title(main="Specificity=85.1, Sensitivity=84.7, PPV=91.6, NPV=74.5")
-
-
-## for the WHO thresold, it is moving. so change it accordingly
-
-
-avg_5<-mean(dSum[1:60])
-SD_2years <- 2*sd(dSum[1:60])
-threshold <- avg_5 + SD_2years 
-
-abline(h=threshold, col = "green")
-
-valueWho <- aSum_3[61:96]>threshold
-dengueCount <- dSum[61:96]>threshold
-
-xtabs(valueWho~dengueCount)
-table(valueWho,dengueCount )
-prop.table(table(valueWho,dengueCount))
-
-valueF <- as.factor(valueWho)
-dengueCountF <- as.factor(dengueCount)
-
-
 specificity(valueF, dengueCountF)
 sensitivity(valueF, dengueCountF) 
 posPredValue(valueF, dengueCountF)
 negPredValue(valueF, dengueCountF)  
+
+
+#title(main="Specificity=87.0, Sensitivity=92.6, PPV=95.72, NPV=78.80")
+
+
+## for the WHO thresold, it is moving.
+
+
+
+
+# avg_5<-mean(dSum[1:60])
+# SD_2years <- 2*sd(dSum[1:60])
+# threshold <- avg_5 + SD_2years 
+# 
+# abline(h=threshold, col = "green")
+# 
+# valueWho <- aSum_3[61:96]>threshold
+# dengueCount <- dSum[61:96]>threshold
+# 
+# xtabs(valueWho~dengueCount)
+# table(valueWho,dengueCount )
+# prop.table(table(valueWho,dengueCount))
+# 
+# valueF <- as.factor(valueWho)
+# dengueCountF <- as.factor(dengueCount)
+# 
+# 
+# specificity(valueF, dengueCountF)
+# sensitivity(valueF, dengueCountF) 
+# posPredValue(valueF, dengueCountF)
+# negPredValue(valueF, dengueCountF)  
 
 #title(main="Specificity=63.63, Sensitivity=96.0, PPV=85.7, NPV=87.5")
-
-
 
 
 
