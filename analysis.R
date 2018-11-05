@@ -1991,14 +1991,7 @@ shapiro.test(resid)
 
 
 
-par(mfrow=c(1,1))
-plot(1:96, dSum, type="l", ylab="Dengue Cases",axes=T,xlab="Months")
-points(aSum_3[1:84],type="l", col="red")
-points(85:96, aSum_3[85:96],type="l", col="blue")
-abline(h=790, col = "gray60")
-legend('topleft', c("Observed", "Predicted on Training Set", "Predicted on Validation Set"),lty=1, col=c('black', 'red', "blue"), bty='n', cex=.75)
 
-abline(h=790, col = "gray60")
 #title("Training Dataset (2008-2014) was used.")
 
 bind <- train3$count>790 #dengue is 120 length vector, 60 is threshold.
@@ -2021,10 +2014,50 @@ posPredValue(valueF, dengueCountF)
 negPredValue(valueF, dengueCountF)  
 
 
-#title(main="Specificity=87.0, Sensitivity=92.6, PPV=95.72, NPV=78.80")
+#title(main="Specificity=92.60, Sensitivity=87.0, PPV=95.72, NPV=78.80")
 
 
-## for the WHO thresold, it is moving.
+## for the WHO thresold, it is moving threshold.
+
+who_threshold <- runmean(aSum_3, 60) +  2 * runsd(aSum_3,60)
+valueWho <- aSum_3[61:96]   >  who_threshold[61:96] #predicted
+dengueCount <- dSum[61:96]  > who_threshold[61:96] #actual
+xtabs(valueWho~dengueCount)
+table(valueWho,dengueCount )
+prop.table(table(valueWho,dengueCount))
+
+valueF <- as.factor(valueWho) #predicted
+dengueCountF <- as.factor(dengueCount) #actual
+
+
+specificity(valueF, dengueCountF) 
+sensitivity(valueF, dengueCountF)
+posPredValue(valueF, dengueCountF)
+negPredValue(valueF, dengueCountF)
+
+#title(main="Specificity=57.14, Sensitivity=100.0, PPV=90.62, NPV=100.0")
+
+conf_matrix <-table(valueF,dengueCountF)
+conf_matrix
+sensitivity(conf_matrix)
+specificity(conf_matrix)
+
+
+## Plotting the results
+
+
+png("Final-Prediction.png",width=1600, height=1300, res=300)
+
+par(mfrow=c(1,1))
+plot(1:96, dSum, type="l", ylab="Dengue Cases",axes=T,xlab="Months")
+points(aSum_3[1:84],type="l", col="red")
+points(85:96, aSum_3[85:96],type="l", col="blue")
+abline(h=790, col = "gray60")
+points(61:96, who_threshold[61:96],type="o", pch = 19, col="magenta", cex = 0.5 )
+legend('topleft', c("Observed", "Predicted on Training Set", "Predicted on Validation Set", "Threshold", "Threshold (WHO)"), lty=1, col=c('black', 'red', "blue", "gray60", "magenta"),  pch = c(NA, NA, NA, NA, 19), bty='n', cex=.75)
+
+dev.off()
+
 
 
 
