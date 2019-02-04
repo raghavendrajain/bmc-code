@@ -76,7 +76,8 @@ plot.ts(summary_DTR, main = "DTR in Bangkok throughout the years shown individua
 
 #DTR within Bangkok throughout the years put together
 
-ggplot(meltdf,aes(x=Month,y=value,colour=variable,group=variable)) + geom_line(size=1.5) + ggtitle("The diurnal temperature range (DTR) in Bangkok (2008-2015)") + labs(x="Months",y="DTR (Celsius)") 
+ggplot(meltdf,aes(x=Month,y=value,colour=variable,group=variable)) + geom_line(size=1.5) + labs(x="Months",y="Diurnal Temperature Range (DTR)") 
+# + ggtitle("The diurnal temperature range (DTR) in Bangkok (2008-2015)") 
 
 # The data for average monthly rainfall in Bangkok 
 
@@ -95,7 +96,8 @@ meltdf$Month <- factor(meltdf$Month, levels = AverageRainInBangkok_2008.2015$Mon
 #DTR within Bangkok throughout the years put together.
 
 
-ggplot(meltdf,aes(x=Month,y=value,colour=variable,group=variable)) + geom_line(size=1.5) + ggtitle("Average Monthly Rainfall in Bangkok (2008-2015)") + labs(x="Months",y="Average Monthly Rainfall (mm)") 
+ggplot(meltdf,aes(x=Month,y=value,colour=variable,group=variable)) + geom_line(size=1.5) + labs(x="Months",y="Mean Monthly Rainfall (mm)") 
+#+ ggtitle("Average Monthly Rainfall in Bangkok (2008-2015)") 
 
 #DengueSurveillaneData
 
@@ -127,7 +129,8 @@ totalDHF
 
 # The DHF incidence peaked in 2013 and 2015. It seems that dengue outbreak increases every alternative year.
 
-ggplot(totalDHF, aes(x = date_sick_year, y = count )) + geom_bar(stat = "identity")  + ggtitle("Reported annual DHF incidents in Bangkok (2008-2015)") + labs(x="Year",y="Yearly Count Data")
+ggplot(totalDHF, aes(x = date_sick_year, y = count )) + geom_bar(stat = "identity")  + labs(x="Year",y="Annual DHF incidences")
+#+ ggtitle("Reported annual DHF incidents in Bangkok (2008-2015)") 
 
 # We can observe a trend in Fig \@ref(fig:DHFTotal) that dengue outbreak increases every alternative year. But is it really a pattern? 
 # Well, we don't have enough data for say that, however we will check and see if we can exploit this 'pattern' for better prediction of dengue.
@@ -141,7 +144,8 @@ totalDHF_month$date_sick_month  <- factor(totalDHF_month$date_sick_month, levels
 
 #The DHF incidence peaked in October and November . It seems that dengue outbreak increases every alternative year.
 
-ggplot(totalDHF_month, aes(x = date_sick_month, y = count )) + geom_bar(stat = "identity")  + ggtitle("Reported Monthly DHF incidents in Bangkok (2008-2015)") + labs(x="Months",y="Aggregated Monthly Count Data")
+ggplot(totalDHF_month, aes(x = date_sick_month, y = count )) + geom_bar(stat = "identity")  + labs(x="Months",y="Monthly aggregate DHF incidences")
+# + ggtitle("Reported Monthly DHF incidents in Bangkok (2008-2015)") 
 
 ## totalDHF_TimeWise 
 
@@ -152,7 +156,8 @@ levels(totalDHF_TimeWise$date_sick_month) <- month.abb
 
 #The DHF incidence peak every year in the months of October and November. However in the year 2013 it seems that DHF occured for many months continously at an alarming rate.
 
-ggplot(totalDHF_TimeWise, aes(x = date_sick_month, y = count)) + geom_bar(stat = "identity")  + ggtitle("Reported DHF incidents in Bangkok (2008-2015)") + labs(x="Months",y="Aggregated Monthly Count Data Across Years") + facet_grid(date_sick_year ~. )
+ggplot(totalDHF_TimeWise, aes(x = date_sick_month, y = count)) + geom_bar(stat = "identity") + labs(x="Months",y="Monthly Aggregate DHF incidences Across Years") + facet_grid(date_sick_year ~. )
+# + ggtitle("Reported DHF incidents in Bangkok (2008-2015)") 
 
 ## Rearranging the columns 
 
@@ -1229,7 +1234,11 @@ range(totalDHF_lagged, na.rm = TRUE)
 
 # png("LongLagContour.png",width=1600, height=1300, res=300)
 
-plot(pred1.temp, "contour", key.title=title("risk"), plot.title=title("Influence of Long-term Lagged Data of Target Districts",xlab="Dengue Counts",ylab="Lag (months)"))
+# plot(pred1.temp, "contour", key.title=title("risk"),
+#      main = "Influence of Long-term Lagged Data of Target Districts",xlab="Dengue Counts",ylab="Lag (months)")
+
+plot(pred1.temp, "contour", key.title=title("risk"),xlab="DHF incidences",ylab="Lag (months)")
+
 
 # dev.off()
 
@@ -1244,8 +1253,8 @@ dev.off()
 # png("LagResposeLongLagMany.png",width=1600, height=1300, res=300)
 
 plot(pred1.temp, "slices", var=1100, col=1, ylab="RR",
-     ci.arg=list(density=15,lwd=2.5),
-     main="Lag-response curve for differing number of dengue cases")
+     ci.arg=list(density=15,lwd=2.5))
+    # main="Lag-response curve for differing number of dengue cases")
 
 for(i in 1:3) lines(pred1.temp, "slices", var=c(900,1000,1200)[i], col=i+1, lwd=1.5)
 legend("topleft",paste("Dengue Units =",c(1100,900,1000,1200)), col=1:4, lwd=1.5)
@@ -2086,6 +2095,98 @@ dev.off()
 
 #title(main="Specificity=63.63, Sensitivity=96.0, PPV=85.7, NPV=87.5")
 
+## Take that correlation
 
 
 
+## Multiplot function taken from http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+x <- c(0,1,2,3)
+
+cor0_d <- cor(WholeDataLagged$count0, WholeDataLagged$count0, method = "pearson", use = "complete.obs")
+cor1_d <- cor(WholeDataLagged$count0, WholeDataLagged$count1, method = "pearson", use = "complete.obs")
+cor2_d <- cor(WholeDataLagged$count0, WholeDataLagged$count2, method = "pearson", use = "complete.obs")
+cor3_d <- cor(WholeDataLagged$count0, WholeDataLagged$count3, method = "pearson", use = "complete.obs")
+cor_d <- c(cor0_d, cor1_d, cor2_d, cor3_d)
+d_d <- data.frame(x, y = cor_d)
+p1<-ggplot(d_d, aes(x, y)) + geom_point(shape = 16, size = 3, show.legend = FALSE) + theme_minimal() +  xlim(0, 3) +  ylim(-1, 1) + xlab("Lagged DHF incidence") + ylab("DHF incidence")
+
+cor0_d <- cor(WholeDataLagged$count0, WholeDataLagged$templ0, method = "pearson", use = "complete.obs")
+cor1_d <- cor(WholeDataLagged$count0, WholeDataLagged$templ1, method = "pearson", use = "complete.obs")
+cor2_d <- cor(WholeDataLagged$count0, WholeDataLagged$templ2, method = "pearson", use = "complete.obs")
+cor3_d <- cor(WholeDataLagged$count0, WholeDataLagged$templ3, method = "pearson", use = "complete.obs")
+cor_t <- c(cor0_d, cor1_d, cor2_d, cor3_d)
+d_t <- data.frame(x, y = cor_t)
+p2<-ggplot(d_t, aes(x, y)) + geom_point(shape = 16, size = 3, show.legend = FALSE)  + theme_minimal() +  xlim(0, 3) +  ylim(-1, 1) + xlab("DTR") + ylab("DHF incidence")
+
+
+cor0_d <- cor(WholeDataLagged$count0, WholeDataLagged$rainl0, method = "pearson", use = "complete.obs")
+cor1_d <- cor(WholeDataLagged$count0, WholeDataLagged$rainl1, method = "pearson", use = "complete.obs")
+cor2_d <- cor(WholeDataLagged$count0, WholeDataLagged$rainl2, method = "pearson", use = "complete.obs")
+cor3_d <- cor(WholeDataLagged$count0, WholeDataLagged$rainl3, method = "pearson", use = "complete.obs")
+cor_r  <- c(cor0_d, cor1_d, cor2_d, cor3_d)
+d_r <- data.frame(x, y = cor_r)
+
+p3<-ggplot(d_r, aes(x, y)) + geom_point(shape = 16, size = 3, show.legend = FALSE)  + theme_minimal() +  xlim(0, 3) +  ylim(-1, 1) + xlab("Rainfall") + ylab("DHF incidence")
+
+cor0_d <- cor(WholeDataLagged$count0, WholeDataLagged$surroundingCountVec0, method = "pearson", use = "complete.obs")
+cor1_d <- cor(WholeDataLagged$count0, WholeDataLagged$surroundingCountVec1, method = "pearson", use = "complete.obs")
+cor2_d <- cor(WholeDataLagged$count0, WholeDataLagged$surroundingCountVec2, method = "pearson", use = "complete.obs")
+cor3_d <- cor(WholeDataLagged$count0, WholeDataLagged$surroundingCountVec3, method = "pearson", use = "complete.obs")
+
+cor_s  <- c(cor0_d, cor1_d, cor2_d, cor3_d)
+d_s <- data.frame(x, y = cor_s)
+
+p4<-ggplot(d_s, aes(x, y)) + geom_point(shape = 16, size = 3, show.legend = FALSE)  + theme_minimal() +  xlim(0, 3) +  ylim(-1, 1) + xlab("DHF Surrounding Districts") + ylab("DHF Target District")
+
+
+
+#ggarrange(p1, p2, nrow = 1)
+
+multiplot(p1, p2, p3, p4, cols=2)
